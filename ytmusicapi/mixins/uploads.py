@@ -33,7 +33,12 @@ class UploadsMixin:
         response = self._send_request(endpoint, body)
         results = find_object_by_key(nav(response, SINGLE_COLUMN_TAB + SECTION_LIST),
                                      'itemSectionRenderer')
-        results = nav(results, ITEM_SECTION)['musicShelfRenderer']
+        results = nav(results, ITEM_SECTION)
+        if 'musicShelfRenderer' not in results:
+            return []
+        else:
+            results = results['musicShelfRenderer']
+
         songs = []
 
         songs.extend(parse_uploaded_items(results['contents'][1:]))
@@ -90,7 +95,11 @@ class UploadsMixin:
         response = self._send_request(endpoint, body)
         results = find_object_by_key(nav(response, SINGLE_COLUMN_TAB + SECTION_LIST),
                                      'itemSectionRenderer')
-        results = nav(results, ITEM_SECTION)['musicShelfRenderer']
+        results = nav(results, ITEM_SECTION)
+        if 'musicShelfRenderer' not in results:
+            return []
+        else:
+            results = results['musicShelfRenderer']
         artists = parse_artists(results['contents'], True)
 
         if 'continuations' in results:
@@ -211,7 +220,7 @@ class UploadsMixin:
                 "The provided file type is not supported by YouTube Music. Supported file types are "
                 + ', '.join(supported_filetypes))
 
-        headers = self.headers
+        headers = self.headers.copy()
         upload_url = "https://upload.youtube.com/upload/usermusic/http?authuser=0"
         filesize = os.path.getsize(filepath)
         body = ("filename=" + ntpath.basename(filepath)).encode('utf-8')

@@ -47,7 +47,8 @@ class PlaylistsMixin:
                   },
                   "duration": "2:58",
                   "likeStatus": "INDIFFERENT",
-                  "thumbnails": [...]
+                  "thumbnails": [...],
+                  "isAvailable": True
                 }
               ]
             }
@@ -207,22 +208,39 @@ class PlaylistsMixin:
         response = self._send_request(endpoint, body)
         return response['status'] if 'status' in response else response
 
-    def add_playlist_items(self, playlistId: str, videoIds: List[str]) -> Union[str, Dict]:
+    def add_playlist_items(self,
+                           playlistId: str,
+                           videoIds: List[str],
+                           source_playlist: str = None,
+                           duplicates: bool = False) -> Union[str, Dict]:
         """
         Add songs to an existing playlist
 
         :param playlistId: Playlist id
         :param videoIds: List of Video ids
+        :param source_playlist: Playlist id of a playlist to add to the current playlist (no duplicate check)
+        :param duplicates: If True, duplicates will be added. If False, an error will be returned if there are duplicates (no items are added to the playlist)
         :return: Status String or full response
         """
         self._check_auth()
         body = {'playlistId': playlistId, 'actions': []}
         for videoId in videoIds:
-            body['actions'].append({'action': 'ACTION_ADD_VIDEO', 'addedVideoId': videoId})
+            action = {'action': 'ACTION_ADD_VIDEO', 'addedVideoId': videoId}
+            if duplicates:
+                action['dedupeOption'] = 'DEDUPE_OPTION_SKIP'
+            body['actions'].append(action)
+
+        if source_playlist:
+            body['actions'].append({
+                'action': 'ACTION_ADD_PLAYLIST',
+                'addedFullListId': source_playlist
+            })
 
         endpoint = 'browse/edit_playlist'
         response = self._send_request(endpoint, body)
-        return response['status'] if 'status' in response else response
+        return response['status'] \
+            if 'status' in response and 'SUCCEEDED' in response['status'] \
+            else response
 
     def remove_playlist_items(self, playlistId: str, videos: List[Dict]) -> Union[str, Dict]:
         """
@@ -234,7 +252,8 @@ class PlaylistsMixin:
         :return: Status String or full response
         """
         self._check_auth()
-        if not videos[0]['setVideoId']:
+        videos = list(filter(lambda x: 'videoId' in x and 'setVideoId' in x, videos))
+        if len(videos) == 0:
             raise Exception(
                 "Cannot remove songs, because setVideoId is missing. Do you own this playlist?")
 

@@ -26,7 +26,7 @@ class TestYTMusic(unittest.TestCase):
     def test_search(self):
         query = "Oasis Wonderwall"
         self.assertRaises(Exception, youtube_auth.search, query, "song")
-        results = youtube_auth.search(query)
+        results = youtube.search(query)
         self.assertGreater(len(results), 0)
         results = youtube_auth.search(query, 'songs')
         self.assertGreater(len(results), 0)
@@ -38,6 +38,10 @@ class TestYTMusic(unittest.TestCase):
         self.assertGreater(len(results), 0)
         results = youtube_auth.search(query, 'playlists')
         self.assertGreater(len(results), 0)
+
+    def test_search_uploads(self):
+        results = youtube_auth.search('audiomachine', 'uploads')
+        self.assertGreater(len(results), 10)
 
     def test_get_artist(self):
         results = youtube.get_artist("UCmMUZbaYdNH0bEd1PAlAqsA")
@@ -107,7 +111,9 @@ class TestYTMusic(unittest.TestCase):
 
     def test_get_library_songs(self):
         songs = youtube_brand.get_library_songs(100)
-        self.assertGreater(len(songs), 0)
+        self.assertGreaterEqual(len(songs), 100)
+        songs = youtube_auth.get_library_songs(200, validate_responses=True)
+        self.assertGreaterEqual(len(songs), 200)
 
     def test_get_library_albums(self):
         albums = youtube_brand.get_library_albums(100)
@@ -128,6 +134,13 @@ class TestYTMusic(unittest.TestCase):
     def test_get_history(self):
         songs = youtube_auth.get_history()
         self.assertGreater(len(songs), 0)
+
+    @unittest.skip
+    def test_remove_history_items(self):
+        songs = youtube_auth.get_history()
+        response = youtube_auth.remove_history_items(
+            [songs[0]['feedbackToken'], songs[1]['feedbackToken']])
+        self.assertIn('feedbackResponses', response)
 
     def test_rate_song(self):
         response = youtube_auth.rate_song('ZrOKjDZOtkA', 'LIKE')
@@ -182,10 +195,13 @@ class TestYTMusic(unittest.TestCase):
             "test description",
             source_playlist="OLAK5uy_lGQfnMNGvYCRdDq9ZLzJV2BJL2aHQsz9Y")
         self.assertEqual(len(playlistId), 34, "Playlist creation failed")
-        response = youtube_auth.add_playlist_items(playlistId, ['y0Hhvtmv0gk'])
+        response = youtube_auth.add_playlist_items(
+            playlistId, ['y0Hhvtmv0gk', 'y0Hhvtmv0gk'],
+            source_playlist='OLAK5uy_nvjTE32aFYdFN7HCyMv3cGqD3wqBb4Jow',
+            duplicates=True)
         self.assertEqual(response, 'STATUS_SUCCEEDED', "Adding playlist item failed")
         playlist = youtube_auth.get_playlist(playlistId)
-        self.assertEqual(len(playlist['tracks']), 41, "Getting playlist items failed")
+        self.assertEqual(len(playlist['tracks']), 46, "Getting playlist items failed")
         response = youtube_auth.remove_playlist_items(playlistId, playlist['tracks'])
         self.assertEqual(response, 'STATUS_SUCCEEDED', "Playlist item removal failed")
         response = youtube_auth.delete_playlist(playlistId)
@@ -200,13 +216,28 @@ class TestYTMusic(unittest.TestCase):
         results = youtube_auth.get_library_upload_songs(100)
         self.assertGreater(len(results), 25)
 
+    @unittest.skip("Must not have any uploaded songs to pass")
+    def test_get_library_upload_songs_empty(self):
+        results = youtube_auth.get_library_upload_songs(100)
+        self.assertEquals(len(results), 0)
+
     def test_get_library_upload_albums(self):
         results = youtube_auth.get_library_upload_albums(50)
         self.assertGreater(len(results), 25)
 
+    @unittest.skip("Must not have any uploaded albums to pass")
+    def test_get_library_upload_albums_empty(self):
+        results = youtube_auth.get_library_upload_albums(100)
+        self.assertEquals(len(results), 0)
+
     def test_get_library_upload_artists(self):
         results = youtube_auth.get_library_upload_artists(50)
         self.assertGreater(len(results), 25)
+
+    @unittest.skip("Must not have any uploaded artsts to pass")
+    def test_get_library_upload_artists_empty(self):
+        results = youtube_auth.get_library_upload_artists(100)
+        self.assertEquals(len(results), 0)
 
     def test_upload_song(self):
         self.assertRaises(Exception, youtube_auth.upload_song, 'song.wav')

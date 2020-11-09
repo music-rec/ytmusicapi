@@ -81,7 +81,7 @@ class YTMusic(BrowsingMixin, WatchMixin, LibraryMixin, PlaylistsMixin, UploadsMi
                 locale.setlocale(locale.LC_ALL, language)
             except locale.Error:
                 with suppress(locale.Error):
-                    locale.setlocale(locale.LC_ALL, 'en_US.UTF8')
+                    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
             self.lang = gettext.translation('base',
                                             localedir=pkg_resources.resource_filename(
                                                 'ytmusicapi', 'locales'),
@@ -103,8 +103,8 @@ class YTMusic(BrowsingMixin, WatchMixin, LibraryMixin, PlaylistsMixin, UploadsMi
     def _send_request(self, endpoint: str, body: Dict, additionalParams: str = "") -> Dict:
         body.update(self.context)
         if self.auth:
-            self.headers["Authorization"] = get_authorization(self.sapisid + ' '
-                                                              + self.headers['x-origin'])
+            origin = self.headers.get('origin', self.headers.get('x-origin'))
+            self.headers["Authorization"] = get_authorization(self.sapisid + ' ' + origin)
         response = requests.post(base_url + endpoint + params + additionalParams,
                                  json=body,
                                  headers=self.headers,
@@ -127,3 +127,9 @@ class YTMusic(BrowsingMixin, WatchMixin, LibraryMixin, PlaylistsMixin, UploadsMi
         :return: configuration headers string
         """
         return setup(filepath, headers_raw)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, execType=None, execValue=None, trackback=None):
+        pass

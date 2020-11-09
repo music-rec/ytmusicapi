@@ -1,7 +1,8 @@
 from .utils import *
+from typing import List
 
 
-def parse_playlist_items(results):
+def parse_playlist_items(results, menu_entries: List[List] = None):
     songs = []
     count = 1
     for result in results:
@@ -11,21 +12,25 @@ def parse_playlist_items(results):
         data = result['musicResponsiveListItemRenderer']
 
         try:
-            # if playlist is not owned, the playlist item can't be interacted with
             videoId = setVideoId = None
             like = None
 
-            # if item is not playable, there is no videoId
-            if 'playNavigationEndpoint' in nav(data, PLAY_BUTTON):
-                videoId = nav(data,
-                              PLAY_BUTTON)['playNavigationEndpoint']['watchEndpoint']['videoId']
-
-                for item in nav(data, MENU_ITEMS):
+            # if the item has a menu, find its setVideoId
+            if 'menu' in data:
+                for item in reversed(nav(data, MENU_ITEMS)):
                     if 'menuServiceItemRenderer' in item and 'playlistEditEndpoint' in nav(
                             item, MENU_SERVICE):
                         setVideoId = nav(
                             item, MENU_SERVICE)['playlistEditEndpoint']['actions'][0]['setVideoId']
+                        videoId = nav(
+                            item,
+                            MENU_SERVICE)['playlistEditEndpoint']['actions'][0]['removedVideoId']
                         break
+
+            # if item is not playable, the videoId was retrieved above
+            if 'playNavigationEndpoint' in nav(data, PLAY_BUTTON):
+                videoId = nav(data,
+                              PLAY_BUTTON)['playNavigationEndpoint']['watchEndpoint']['videoId']
 
                 if 'menu' in data:
                     like = nav(data, MENU_LIKE_STATUS, True)
@@ -52,18 +57,28 @@ def parse_playlist_items(results):
             if 'thumbnail' in data:
                 thumbnails = nav(data, THUMBNAILS)
 
+            isAvailable = True
+            if 'musicItemRendererDisplayPolicy' in data:
+                isAvailable = data[
+                    'musicItemRendererDisplayPolicy'] != 'MUSIC_ITEM_RENDERER_DISPLAY_POLICY_GREY_OUT'
+
             song = {
                 'videoId': videoId,
                 'title': title,
                 'artists': artists,
                 'album': album,
                 'likeStatus': like,
-                'thumbnails': thumbnails
+                'thumbnails': thumbnails,
+                'isAvailable': isAvailable
             }
             if duration:
                 song['duration'] = duration
             if setVideoId:
                 song['setVideoId'] = setVideoId
+
+            if menu_entries:
+                for menu_entry in menu_entries:
+                    song[menu_entry[-1]] = nav(data, MENU_ITEMS + menu_entry)
 
             songs.append(song)
 

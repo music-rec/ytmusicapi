@@ -1,3 +1,4 @@
+from .playlists import parse_playlist_items
 from .utils import *
 
 
@@ -50,9 +51,11 @@ def parse_albums(results, upload=True):
                     'id': nav(subtitle, NAVIGATION_BROWSE_ID)
                 })
         else:
-            album['artists'] = nav(data, SUBTITLE)
-            album['year'] = nav(data, SUBTITLE2)
-            album['trackCount'] = nav(data, SUBTITLE3).split(' ')[0]
+            album['artists'] = {
+                'name': nav(data, SUBTITLE2),
+                'id': nav(data, ['subtitle', 'runs', 2] + NAVIGATION_BROWSE_ID, True)
+            }
+            album['year'] = nav(data, SUBTITLE3)
 
         albums.append(album)
 
@@ -75,3 +78,15 @@ def parse_library_artists(response, request_func, limit):
                               request_func, parse_func))
 
     return artists
+
+
+def parse_library_songs(response):
+    results = find_object_by_key(nav(response, SINGLE_COLUMN_TAB + SECTION_LIST),
+                                 'itemSectionRenderer')
+    results = nav(results, ITEM_SECTION)
+    songs = {'results': [], 'parsed': []}
+    if 'musicShelfRenderer' in results:
+        songs['results'] = results['musicShelfRenderer']
+        songs['parsed'] = parse_playlist_items(songs['results']['contents'][1:])
+
+    return songs

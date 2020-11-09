@@ -1,7 +1,6 @@
 # commonly used navigation paths
-SINGLE_COLUMN_TAB = [
-    'contents', 'singleColumnBrowseResultsRenderer', 'tabs', 0, 'tabRenderer', 'content'
-]
+TAB_CONTENT = ['tabs', 0, 'tabRenderer', 'content']
+SINGLE_COLUMN_TAB = ['contents', 'singleColumnBrowseResultsRenderer'] + TAB_CONTENT
 SECTION_LIST = ['sectionListRenderer', 'contents']
 ITEM_SECTION = ['itemSectionRenderer', 'contents', 0]
 MUSIC_SHELF = [0, 'musicShelfRenderer']
@@ -19,6 +18,7 @@ CAROUSEL_TITLE = ['header', 'musicCarouselShelfBasicHeaderRenderer', 'title', 'r
 FRAMEWORK_MUTATIONS = ['frameworkUpdates', 'entityBatchUpdate', 'mutations']
 TITLE = ['title', 'runs', 0]
 TITLE_TEXT = ['title', 'runs', 0, 'text']
+TEXT_RUN = ['text', 'runs', 0]
 SUBTITLE = ['subtitle', 'runs', 0, 'text']
 SUBTITLE2 = ['subtitle', 'runs', 2, 'text']
 SUBTITLE3 = ['subtitle', 'runs', 4, 'text']

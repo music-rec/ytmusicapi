@@ -20,14 +20,15 @@ def setup(filepath=None, headers_raw=None):
     else:
         contents = headers_raw.split('\n')
 
-    required_headers = ["Cookie"]
+    required_headers = ["Cookie", "X-Goog-AuthUser"]
+    required_headers_lower = {v.lower(): v for v in required_headers }
     try:
         headers = {}
         for content in contents:
             header = content.split(': ')
-            key = header[0]
-            if key in required_headers:
-                headers[key] = ': '.join(header[1:])
+            key = header[0].lower()
+            if key in required_headers_lower:
+                headers[required_headers_lower[key]] = ': '.join(header[1:])
 
     except Exception as e:
         raise Exception("Error parsing your input, please try again. Full error: " + str(e))
